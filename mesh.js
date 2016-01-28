@@ -16,20 +16,26 @@ module.exports = function (options) {
 
   // become a base node
   if( options.base ) {
-    options.host = '127.0.0.1'
-    options.port = 39999
+    options.host = options.basehost || '127.0.0.1'
+    options.port = options.baseport || 39999
     options.pin  = 'role:mesh,base:true'
     options.auto = true
+    options.remotes = [options.basehost + ':' + options.baseport]
   }
+
+  options.basehost = options.basehost || '127.0.0.1'
+  options.baseport = options.baseport || 39999
 
   // merge default options with any provided by the caller
   options = seneca.util.deepextend({
-    host: '127.0.0.1',
+    host: options.host || '127.0.0.1',
     port: function() {
       return 40000 + Math.floor((10000*Math.random()))
     },
-    remotes: ['127.0.0.1:39999']
+    remotes: [options.basehost + ':' + options.baseport]
   }, options)
+
+  console.log(options)
 
 
   // single pin(s) entry supported as a convenience
@@ -42,7 +48,7 @@ module.exports = function (options) {
 
   seneca.add( 'role:transport,cmd:listen', transport_listen )
 
-  
+
   if( options.auto ) {
     _.each( listen, function( listen_opts ) {
       var pin = listen_opts.pin || listen_opts.pins
@@ -80,8 +86,8 @@ module.exports = function (options) {
       config.pin = 'null:true'
     }
 
-    var host = options.host + ( options.port ? 
-                               ':'+(_.isFunction(options.port) ? 
+    var host = options.host + ( options.port ?
+                               ':'+(_.isFunction(options.port) ?
                                     options.port() : options.port ) : '' )
     var meta = {
       who: host,
@@ -104,16 +110,16 @@ module.exports = function (options) {
       pingReqGroupSize: 3,
       udp: {maxDgramSize: 512},
     }
-    
+
     var swim = new Swim(opts)
 
     swim.on(Swim.EventType.Error, function(err) {
       if ('EADDRINUSE' === err.code && attempts < max_attempts) {
         attempts++
-        setTimeout( 
+        setTimeout(
           function() {
             join( instance, config, done )
-          }, 
+          },
           100 + Math.floor(Math.random() * 222)
         )
         return
@@ -148,7 +154,7 @@ module.exports = function (options) {
       swim.on(Swim.EventType.Update, function onUpdate(info) {
         updateinfo(info)
       })
-      
+
     })
 
 
@@ -157,7 +163,7 @@ module.exports = function (options) {
       if( m.meta.instance === seneca.id ) {
         return
       }
-        
+
       if( 0 === m.state ) {
         add_client( m.meta.listen )
       }
@@ -200,9 +206,9 @@ module.exports = function (options) {
 
         target_map[id] = true
 
-        instance.act( 
-          'role:transport,type:balance,add:client', 
-          {config:pin_config} ) 
+        instance.act(
+          'role:transport,type:balance,add:client',
+          {config:pin_config} )
       })
     }
 
@@ -228,9 +234,9 @@ module.exports = function (options) {
           delete target_map[id]
         }
 
-        instance.act( 
-          'role:transport,type:balance,remove:client', 
-          {config:pin_config} ) 
+        instance.act(
+          'role:transport,type:balance,remove:client',
+          {config:pin_config} )
       })
 
     }
