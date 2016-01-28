@@ -16,15 +16,12 @@ module.exports = function (options) {
 
   // become a base node
   if( options.base ) {
-    options.host = options.basehost || '127.0.0.1'
-    options.port = options.baseport || 39999
+    options.host = options.host || '127.0.0.1'
+    options.port = options.port || 39999
     options.pin  = 'role:mesh,base:true'
     options.auto = true
-    options.remotes = [options.basehost + ':' + options.baseport]
+    options.remotes = [options.host + ':' + options.port]
   }
-
-  options.basehost = options.basehost || '127.0.0.1'
-  options.baseport = options.baseport || 39999
 
   // merge default options with any provided by the caller
   options = seneca.util.deepextend({
@@ -32,10 +29,8 @@ module.exports = function (options) {
     port: function() {
       return 40000 + Math.floor((10000*Math.random()))
     },
-    remotes: [options.basehost + ':' + options.baseport]
+    remotes: [(options.basehost || '127.0.0.1') + ':' + (options.baseport || 39999)]
   }, options)
-
-  console.log(options)
 
 
   // single pin(s) entry supported as a convenience
